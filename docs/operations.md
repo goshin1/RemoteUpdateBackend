@@ -61,6 +61,7 @@ java -jar build\libs\RemoteUpdateBackend-0.0.1-SNAPSHOT.jar
 | `COOKIE_SECURE` | `false` | HTTPS 운영 시 `true` |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | `admin@onpoom.co.kr` / `ChangeMe!2026` | **운영에서는 반드시 비밀번호를 지정** |
 | `ADMIN_RESET_ON_START` | `false` | 관리자 복구용 (7번) |
+| `IP_FILTER_ENABLED` | `false` | 관리 기능 IP 제한 (12번) |
 | `JPA_DDL_AUTO` | `update` | 6번 참고 |
 
 > Windows 서비스로 등록하려면 WinSW, NSSM 같은 도구로 위 명령을 서비스로 감싸면 PC 재부팅 후에도 자동으로 실행됩니다.
@@ -141,3 +142,56 @@ java -jar build\libs\RemoteUpdateBackend-0.0.1-SNAPSHOT.jar
 임시 비밀번호로 첫 로그인하면 "비밀번호 변경 필요" 필터가 **화면 파일(js, css)까지** 막아서 비밀번호 변경 화면을 띄울 수 없었습니다.
 개발 중에는 화면 파일을 Vite 가 따로 제공해서 드러나지 않았습니다.
 → 필터를 `/api` 요청에만 적용하도록 수정하고, `FrontendServingTest` 에 회귀 테스트를 추가했습니다.
+
+## 12. 관리 기능 IP 제한
+
+**범위** (기획서 결정 #4 확정): 로그인·조회·다운로드는 어디서나 되고, 아래만 허용 IP 에서 됩니다.
+
+- 데이터를 바꾸는 요청: 업데이트·가이드·프로젝트 등록·수정·배포 중단, 비밀번호 변경 제외
+- 관리자 메뉴 전체 (`/api/v1/admin/**`: 사용자 관리, 허용 IP 관리 — 조회 포함)
+
+현장 직원은 조회·다운로드만 하므로 현장 IP 가 바뀌어도 영향이 없습니다.
+
+### 켜는 순서
+
+1. 관리자로 로그인 → **허용 IP** 메뉴 → 사무실 IP 등록 ("내 IP 넣기" 버튼으로 지금 접속 IP 를 채울 수 있음)
+   - 사무실 IP 가 범위로 바뀐다면 CIDR 로 (예: `203.0.113.0/24`)
+2. 서버를 `IP_FILTER_ENABLED=true` 로 다시 시작
+3. 허용 IP 화면 위쪽에 "IP 제한 사용 중", "내 접속 IP … 관리 가능" 이 나오는지 확인
+
+허용 IP 추가·중지·삭제는 서버 재시작 없이 바로 적용됩니다.
+
+### 리버스 프록시를 쓸 때
+
+프록시 뒤에서는 서버가 보는 접속 IP 가 전부 프록시 주소가 됩니다.
+`application.yml` 의 `app.security.ip-filter.trusted-proxies` 에 프록시 주소를 넣어야 실제 접속 IP 로 판단합니다 (4번).
+그 외 주소에서 온 `X-Forwarded-For` 헤더는 무시하므로, 헤더를 위조해 우회할 수 없습니다.
+
+### 스스로 잠기지 않게 하는 장치
+
+- **서버 PC 자신(127.0.0.1)에서 접속하면 항상 허용** — 원격으로 막혀도 서버 PC 에서 브라우저로 `http://localhost:8080` 에 접속해 고칠 수 있음
+- 지금 접속한 IP 를 막게 되는 중지·삭제는 서버가 거부 (`CANNOT_LOCK_OUT_SELF`)
+
+### 긴급 절차: 사무실 IP 가 바뀌어 아무도 관리 기능을 못 쓸 때
+
+다음 중 하나를 하세요.
+
+1. **서버 PC 에서 접속** (`http://localhost:8080`) → 허용 IP 에 새 사무실 IP 추가
+2. **DB 에 직접 추가** — 재시작 없이 바로 적용됨
+   ```sql
+   INSERT INTO allowed_ip (ip_or_cidr, description, enabled, created_at)
+   VALUES ('203.0.113.10', '긴급 추가', 1, NOW());
+   ```
+3. **제한을 잠시 끄기** — `IP_FILTER_ENABLED=false` 로 재시작 → IP 등록 → 다시 `true` 로 재시작
+
+### 확인 결과 (Phase 7)
+
+| 항목 | 결과 |
+|---|---|
+| 허용되지 않은 위치의 개발자: 로그인·비밀번호 변경·이력 조회 | 가능 |
+| 같은 개발자의 업데이트 등록 | "허용되지 않은 IP입니다." 로 거부, 화면 위쪽에 안내 배너 |
+| 관리자가 그 위치를 CIDR 로 등록 | 재시작 없이 즉시 등록 가능, 배너 사라짐 |
+| 외부 위치의 관리자가 자기 IP 항목 삭제 | 거부 (스스로 잠김 방지) |
+| 서버 PC 의 관리자 | 항상 가능 |
+| `X-Forwarded-For` 위조 | 무시됨 |
+| IP 제한을 켠 상태로 전체 시나리오(28개) | 통과 |

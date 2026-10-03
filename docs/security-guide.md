@@ -234,9 +234,35 @@ Phase 2·3 항목은 구현 완료 (`storage/LocalFileStorage.java`, `storage/Up
 | 3 | 다운로드 시 권한·비활성 여부 확인 후 서버가 스트리밍 | 실제 저장 경로를 노출하지 않음 |
 | 3 | 다운로드 이력의 IP는 `ClientIpResolver`로 결정. `X-Forwarded-For`는 신뢰하는 프록시(`app.security.ip-filter.trusted-proxies`)에서 온 경우에만 사용 | 헤더를 위조해 다른 IP로 기록되게 하는 공격 |
 | 3 | 가이드 본문(마크다운)은 원문 그대로 내려가므로, 프런트에서 HTML로 바꿀 때 원시 HTML을 막아야 함 | 가이드에 스크립트를 심는 **XSS** 공격 |
-| 7 | 허용 IP 필터 (같은 `ClientIpResolver` 사용) | 허용되지 않은 위치에서 관리 기능 사용 |
+| 7 | 허용 IP 필터 (같은 `ClientIpResolver` 사용) — 구현 완료, 10-1 참고 | 허용되지 않은 위치에서 관리 기능 사용 |
 
 ---
+
+## 10-1. 관리 기능 IP 제한 (Phase 7)
+
+로그인만으로는 비밀번호가 유출되면 어디서든 관리 기능을 쓸 수 있습니다. 그래서 **데이터를 바꾸는 요청**과 **관리자 메뉴**는 허용한 장소(사무실 IP)에서만 받습니다.
+
+```
+요청 → ... → 권한 검사(AuthorizationFilter) → IpRestrictionFilter → ...
+                                                 │
+                       /api/v1/admin/** 이거나, POST/PUT/PATCH/DELETE (단, /api/v1/auth/** 제외)?
+                                 │ 예                                   │ 아니오
+                     접속 IP 가 허용 목록(CIDR)에 있나?                     통과
+                         │ 예          │ 아니오
+                        통과        403 IP_NOT_ALLOWED
+```
+
+| 장치 | 이유 |
+|---|---|
+| 접속 IP 는 `ClientIpResolver` 하나로 결정, `X-Forwarded-For` 는 신뢰 프록시에서만 | 헤더 위조로 허용 IP 인 척하는 공격 차단 |
+| 허용 목록은 단일 IP 와 CIDR(범위) 모두 | 사무실 IP 가 범위로 바뀌는 경우 |
+| 입력값을 IP 모양인지 먼저 검사 | `InetAddress` 가 호스트 이름으로 보고 DNS 를 조회하는 것 방지 (backend-concepts.md 26번) |
+| 서버 PC(127.0.0.1)는 항상 허용 | 설정 실수로 모두 잠겼을 때 복구 경로 |
+| 지금 IP 를 막게 되는 변경 거부 | 원격 관리자가 스스로를 잠그는 사고 방지 |
+| 로그인·조회·다운로드는 제한 안 함 | 현장 직원은 IP 가 수시로 바뀜 (기획서 결정 #4) |
+
+> 코드: `ipfilter/IpRestrictionFilter.java`, `ipfilter/IpAccessPolicy.java`, `ipfilter/AllowedIpService.java`
+> 운영 방법·긴급 절차: `docs/operations.md` 12번
 
 ## 11. XSS — 가이드 본문에 스크립트를 심는 공격
 

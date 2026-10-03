@@ -32,6 +32,8 @@ RemoteUpdate를 만들면서 실제로 쓴 Spring Boot / JPA 개념을 정리한
 22. [경쟁 조건(race condition)](#22-경쟁-조건race-condition)
 23. [개발 환경과 운영 환경은 다르다](#23-개발-환경과-운영-환경은-다르다)
 24. [성능을 숫자로 확인하기](#24-성능을-숫자로-확인하기)
+25. [메서드 이름 쿼리의 함정과 @Query](#25-메서드-이름-쿼리의-함정과-query)
+26. [IP 주소 다루기: CIDR, 그리고 DNS 조회 함정](#26-ip-주소-다루기-cidr-그리고-dns-조회-함정)
 
 ---
 
@@ -572,3 +574,48 @@ Phase 6 에서 운영 방식(Spring 하나가 화면까지 제공)으로 띄우�
 | 메모리 | `-Xmx` 로 힙 제한, `ps` / 작업 관리자로 프로세스 메모리 |
 | SQL 수 | `org.hibernate.SQL=DEBUG` 로그 |
 | 응답 시간 | `curl -w '%{time_total}'`, 브라우저 개발자 도구 Network 탭 |
+
+---
+
+## 25. 메서드 이름 쿼리의 함정과 @Query
+
+Spring Data 는 메서드 이름을 **키워드로 쪼개서** 쿼리를 만듭니다. `And`, `Or`, `Between`, `LessThan`, `OrderBy` 같은 단어가 키워드입니다.
+
+Phase 7 에서 허용 IP 테이블의 필드 이름이 `ipOrCidr` 였는데, `existsByIpOrCidr(...)` 라고 짓자 앱이 시작조차 하지 못했습니다.
+
+```
+No property 'ip' found for type 'AllowedIp'; Did you mean 'id'
+```
+
+Spring Data 가 `IpOrCidr` 를 "`ip` **Or** `cidr`" 로 읽고 `ip` 라는 필드를 찾았기 때문입니다.
+이런 경우에는 `@Query` 로 쿼리를 직접 적습니다.
+
+```java
+@Query("select count(a) > 0 from AllowedIp a where a.ipOrCidr = :value")
+boolean existsByValue(@Param("value") String value);
+```
+
+- **JPQL**: SQL 과 비슷하지만 테이블·컬럼 대신 **엔티티·필드 이름**으로 씁니다 (`AllowedIp`, `ipOrCidr` — `allowed_ip`, `ip_or_cidr` 아님)
+- `:value` 는 이름 붙은 파라미터. 값은 항상 바인딩되므로 SQL 인젝션 걱정이 없습니다
+- 좋은 점: 이런 실수는 **앱 시작 시점**에 바로 드러납니다 (Repository 를 만들 때 메서드 이름을 해석하므로). 테스트가 즉시 실패해서 알 수 있었습니다
+
+**메서드 이름 쿼리 vs @Query**: 조건 1~2개면 이름 쿼리가 간단하고, 길어지거나 이름이 애매하면 `@Query`, 조건이 동적으로 바뀌면 Specification(12번).
+
+---
+
+## 26. IP 주소 다루기: CIDR, 그리고 DNS 조회 함정
+
+**CIDR**: `192.168.0.0/24` = 앞 24비트(`192.168.0`)가 같은 주소 전부 = `192.168.0.0 ~ 192.168.0.255`.
+`/32` 는 IPv4 한 개, `/16` 은 65,536개. 사무실처럼 IP 가 범위 안에서 바뀌는 곳에 씁니다.
+Spring Security 의 `IpAddressMatcher` 가 IPv4·IPv6, 단일 IP·CIDR 을 모두 처리합니다.
+
+**함정: 문자열을 IP 로 바꾸다가 DNS 를 조회한다**
+`IpAddressMatcher` 는 내부에서 `InetAddress.getByName(문자열)` 을 씁니다. 이 메서드는 문자열이 IP 모양이 아니면 **호스트 이름으로 보고 DNS 조회**를 합니다.
+`"999.1.1.1"` 이나 `"office"` 를 허용 IP 로 입력하면, 검증하는 순간 서버가 DNS 서버에 물어보러 갑니다 — 느리고, 외부 DNS 결과에 따라 동작이 달라질 수 있습니다.
+그래서 넘기기 전에 **글자 모양**으로 먼저 거릅니다 (IPv4 는 숫자 4개·각 0~255, IPv6 는 16진수와 콜론만).
+
+> 코드: `ipfilter/IpAccessPolicy.isIpLiteral()`
+
+**교훈**: 라이브러리 메서드가 "문자열 → 객체" 변환을 할 때, 실패하면 무엇을 하는지(예외? 네트워크 조회?) 확인하는 습관이 필요합니다.
+
+**localhost 와 IPv6**: Windows 에서 `http://localhost` 로 접속하면 서버가 보는 주소가 `127.0.0.1` 이 아니라 IPv6 `0:0:0:0:0:0:0:1`(`::1`) 일 수 있습니다. 그래서 "서버 PC 자신" 판정에 둘 다 넣었습니다.
