@@ -17,6 +17,11 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * 인증 API. 로그아웃(POST /api/v1/auth/logout)은 SecurityConfig 의 logout 설정이 처리한다.
+ * <ul>
+ *   <li>@RestController = @Controller + @ResponseBody: 메서드가 돌려준 객체를 JSON 으로 바꿔 응답 본문에 씀</li>
+ *   <li>@RequestMapping("/api/v1/auth"): 이 클래스 모든 메서드 주소의 공통 앞부분</li>
+ *   <li>@RequiredArgsConstructor (Lombok): final 필드를 받는 생성자 자동 생성 → 스프링이 그 생성자로 빈을 주입(DI)</li>
+ * </ul>
  */
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -39,6 +44,12 @@ public class AuthController {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * 로그인.
+     * - @RequestBody: 요청 본문 JSON 을 LoginRequest 로 변환
+     * - @Valid: LoginRequest 의 @NotBlank 등 검증 실행 (실패 시 400 VALIDATION_FAILED)
+     * - HttpServletRequest/Response: 세션 ID 교체와 세션 저장에 필요해서 직접 받음
+     */
     @PostMapping("/login")
     public MeResponse login(@Valid @RequestBody LoginRequest body,
             HttpServletRequest request, HttpServletResponse response) {
@@ -47,6 +58,7 @@ public class AuthController {
         return authService.me(principal.id());
     }
 
+    /** @AuthenticationPrincipal: 세션에 저장된 로그인 사용자(UserPrincipal)를 꺼내 파라미터로 넣어 줌 */
     @GetMapping("/me")
     public MeResponse me(@AuthenticationPrincipal UserPrincipal principal) {
         return authService.me(principal.id());

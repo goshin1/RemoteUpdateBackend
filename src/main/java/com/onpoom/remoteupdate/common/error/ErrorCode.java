@@ -29,6 +29,12 @@ public enum ErrorCode {
     CURRENT_PASSWORD_MISMATCH(HttpStatus.BAD_REQUEST, "현재 비밀번호가 올바르지 않습니다."),
     SAME_AS_CURRENT_PASSWORD(HttpStatus.BAD_REQUEST, "새 비밀번호가 현재 비밀번호와 같습니다."),
 
+    // 사용자 관리
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."),
+    DUPLICATE_EMAIL(HttpStatus.CONFLICT, "이미 등록된 이메일입니다."),
+    CANNOT_CHANGE_OWN_ACCOUNT(HttpStatus.BAD_REQUEST, "본인 계정의 역할·사용 여부는 바꿀 수 없습니다. 다른 관리자에게 요청하세요."),
+    LAST_ADMIN(HttpStatus.CONFLICT, "활성 관리자가 최소 한 명은 있어야 합니다."),
+
     // 프로젝트 / 업데이트
     PROJECT_NOT_FOUND(HttpStatus.NOT_FOUND, "프로젝트를 찾을 수 없습니다."),
     DUPLICATE_PROJECT_NAME(HttpStatus.CONFLICT, "이미 같은 이름의 프로젝트가 있습니다."),

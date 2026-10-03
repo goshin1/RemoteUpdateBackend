@@ -93,6 +93,8 @@ public class UpdateService {
 
         UpdateInfo info;
         try {
+            // save 는 INSERT 를 트랜잭션 끝까지 미룰 수 있다. saveAndFlush 는 즉시 DB 로 보내서
+            // 유니크 제약 위반(같은 버전 동시 등록)을 이 try 안에서 잡을 수 있게 한다
             info = updateRepository.saveAndFlush(UpdateInfo.create(project, developer, version,
                     request.title().trim(), request.content(), stored.key(), stored.originalName(),
                     stored.size(), stored.sha256()));

@@ -15,7 +15,17 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 
 import lombok.extern.slf4j.Slf4j;
 
-/** 모든 API 오류를 { code, message } 형식으로 통일 */
+/**
+ * 모든 API 오류를 { code, message } 형식으로 통일한다.
+ * <ul>
+ *   <li>@RestControllerAdvice: 모든 컨트롤러에 공통으로 적용되는 예외 처리기. 컨트롤러·서비스에서 던진 예외가 여기로 온다</li>
+ *   <li>@ExceptionHandler(X.class): X 타입 예외가 나면 이 메서드가 응답을 만든다 (가장 구체적인 타입이 우선)</li>
+ *   <li>ResponseEntityExceptionHandler 상속: 스프링 MVC 기본 예외(404, 405, 검증 실패 등)를 처리하는 메서드를 물려받아,
+ *       그 응답 형식만 우리 형식으로 바꿔 끼운다(override)</li>
+ * </ul>
+ * 덕분에 컨트롤러·서비스는 try-catch 없이 throw new ApiException(ErrorCode.XXX) 만 하면 된다.
+ * 단, 보안 필터 단계(컨트롤러 이전) 오류는 여기 오지 않는다 → SecurityErrorWriter 담당
+ */
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {

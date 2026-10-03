@@ -42,6 +42,12 @@ public class UpdateInfo extends BaseTimeEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /**
+     * 소속 프로젝트 (다대일: 업데이트 여러 개 → 프로젝트 하나).
+     * - @ManyToOne: DB 에는 project_id 외래키 컬럼으로 저장되고, 자바에서는 Project 객체로 다룬다
+     * - fetch = LAZY: UpdateInfo 를 조회할 때 Project 를 바로 읽지 않고, 실제로 쓸 때 읽음 (기본값 EAGER 는 불필요한 조인 유발)
+     * - @JoinColumn: 외래키 컬럼 이름과 제약
+     */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "project_id", nullable = false, updatable = false)
     private Project project;
@@ -96,7 +102,7 @@ public class UpdateInfo extends BaseTimeEntity {
         return info;
     }
 
-    /** 메타데이터만 수정 가능 */
+    /** 메타데이터만 수정 가능. 트랜잭션 안에서 호출하면 더티 체킹으로 UPDATE 가 자동 실행됨 (save 불필요) */
     public void updateMeta(String title, String content) {
         this.title = title;
         this.content = content;

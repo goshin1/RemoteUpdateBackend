@@ -29,11 +29,16 @@ public class ProjectController {
         return projectService.findAll();
     }
 
+    /** @PathVariable: 주소의 {id} 부분을 파라미터로 받음 (/api/v1/projects/3 → id = 3) */
     @GetMapping("/{id}")
     public ProjectResponse get(@PathVariable Long id) {
         return projectService.findOne(id);
     }
 
+    /**
+     * 등록 → 201 Created + Location 헤더(새로 만든 자원의 주소). REST 에서 "생성"의 표준 응답.
+     * @PreAuthorize: 메서드 실행 전에 권한 검사. 실패하면 403 (SecurityConfig 의 @EnableMethodSecurity 로 활성화)
+     */
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProjectResponse> create(@Valid @RequestBody ProjectRequest request) {

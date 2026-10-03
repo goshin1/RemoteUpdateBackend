@@ -11,6 +11,7 @@ import com.onpoom.remoteupdate.common.error.ErrorCode;
 import com.onpoom.remoteupdate.config.AppProperties;
 import com.onpoom.remoteupdate.user.AppUser;
 import com.onpoom.remoteupdate.user.AppUserRepository;
+import com.onpoom.remoteupdate.user.UserAdminService;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -39,7 +40,8 @@ public class AuthService {
     @Transactional(noRollbackFor = ApiException.class)
     public UserPrincipal authenticate(LoginRequest request) {
         LocalDateTime now = LocalDateTime.now();
-        AppUser user = userRepository.findByEmail(request.email().trim()).orElse(null);
+        // 이메일은 소문자로 저장하므로 입력도 소문자로 맞춰 찾음
+        AppUser user = userRepository.findByEmail(UserAdminService.normalizeEmail(request.email())).orElse(null);
 
         if (user == null) {
             passwordEncoder.matches(request.password(), dummyHash);

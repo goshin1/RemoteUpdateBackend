@@ -100,10 +100,9 @@ class AuthApiTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.mustChangePassword").value(false));
 
-        // 변경 후: 차단이 풀림 (아직 없는 API 이므로 404)
+        // 변경 후: 차단이 풀림
         mvc.perform(get("/api/v1/admin/users").session(session))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.code").value("NOT_FOUND"));
+                .andExpect(status().isOk());
     }
 
     @Test

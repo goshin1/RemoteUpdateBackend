@@ -11,7 +11,17 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
-/** 로그인 사용자 정보를 SecurityContext 에 넣고 세션에 저장 */
+/**
+ * 로그인 사용자 정보를 SecurityContext 에 넣고 세션에 저장한다.
+ * <p>
+ * Spring Security 용어
+ * <ul>
+ *   <li>Authentication: "누가 로그인했는가" (principal = UserPrincipal, authorities = ROLE_ADMIN 같은 권한 목록)</li>
+ *   <li>SecurityContext: Authentication 을 담는 상자. 요청을 처리하는 동안 SecurityContextHolder 에 들어 있다</li>
+ *   <li>SecurityContextRepository: SecurityContext 를 세션에 저장/복원. 저장해 두면 다음 요청에서 자동으로 꺼내 진다</li>
+ * </ul>
+ * 보통은 Spring Security 의 로그인 필터가 이 일을 하지만, 우리는 JSON 로그인 API 를 직접 만들었으므로 직접 저장한다.
+ */
 @Component
 @RequiredArgsConstructor
 public class SessionAuthenticator {

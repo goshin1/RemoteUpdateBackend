@@ -17,7 +17,7 @@ class ClientIpResolverTest {
         AppProperties props = new AppProperties(null, new AppProperties.Upload(Set.of()),
                 new AppProperties.Security(new AppProperties.Login(5, Duration.ofMinutes(15)),
                         new AppProperties.IpFilter(false, trustedProxies)),
-                null);
+                null, null);
         return new ClientIpResolver(props);
     }
 

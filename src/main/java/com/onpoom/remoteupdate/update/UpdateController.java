@@ -42,7 +42,12 @@ public class UpdateController {
         return updateService.list(projectId, status, page, size, principal);
     }
 
-    /** multipart/form-data: version, title, content, file */
+    /**
+     * 업데이트 등록. 요청 형식은 JSON 이 아니라 multipart/form-data (파일 + 텍스트 필드).
+     * - consumes: 이 형식의 요청만 받음
+     * - @ModelAttribute: 폼 필드(version, title, content)를 record 로 묶어 받음 (JSON 본문이 아니므로 @RequestBody 가 아님)
+     * - @RequestParam("file") MultipartFile: 업로드 파일. required = false 로 받고 없으면 서비스에서 FILE_REQUIRED 로 안내
+     */
     @PostMapping(value = "/projects/{projectId}/updates", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('DEVELOPER')")
     public ResponseEntity<UpdateResponse> create(@PathVariable Long projectId,
