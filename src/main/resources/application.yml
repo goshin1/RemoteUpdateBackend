@@ -52,8 +52,10 @@ app:
       max-failures: 5
       lock-duration: 15m
     ip-filter:
-      # Phase 7에서 구현. 그 전까지는 꺼둠
-      enabled: false
+      # 관리 기능 IP 제한. 켜기 전에 관리자 화면 "허용 IP"에서 사무실 IP 를 먼저 등록할 것 (docs/operations.md)
+      enabled: ${IP_FILTER_ENABLED:false}
+      # 서버 PC 자신에서 접속하면 항상 허용 (복구 경로)
+      always-allow-localhost: true
       # 리버스 프록시를 쓰는 경우에만 프록시 IP를 넣음 (X-Forwarded-For 신뢰 대상)
       trusted-proxies: []
   seed:

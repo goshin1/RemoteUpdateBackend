@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.onpoom.remoteupdate.common.web.ClientIpResolver;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -30,6 +32,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final SessionAuthenticator sessionAuthenticator;
+    private final ClientIpResolver clientIpResolver;
 
     /**
      * CSRF 토큰 쿠키 발급. 호출하면 XSRF-TOKEN 쿠키가 내려가고,
@@ -55,13 +58,13 @@ public class AuthController {
             HttpServletRequest request, HttpServletResponse response) {
         UserPrincipal principal = authService.authenticate(body);
         sessionAuthenticator.signIn(principal, request, response);
-        return authService.me(principal.id());
+        return authService.me(principal.id(), clientIpResolver.resolve(request));
     }
 
     /** @AuthenticationPrincipal: 세션에 저장된 로그인 사용자(UserPrincipal)를 꺼내 파라미터로 넣어 줌 */
     @GetMapping("/me")
-    public MeResponse me(@AuthenticationPrincipal UserPrincipal principal) {
-        return authService.me(principal.id());
+    public MeResponse me(@AuthenticationPrincipal UserPrincipal principal, HttpServletRequest request) {
+        return authService.me(principal.id(), clientIpResolver.resolve(request));
     }
 
     @PutMapping("/password")
@@ -70,6 +73,6 @@ public class AuthController {
             HttpServletRequest request, HttpServletResponse response) {
         UserPrincipal updated = authService.changePassword(principal.id(), body);
         sessionAuthenticator.refresh(updated, request, response);
-        return authService.me(updated.id());
+        return authService.me(updated.id(), clientIpResolver.resolve(request));
     }
 }

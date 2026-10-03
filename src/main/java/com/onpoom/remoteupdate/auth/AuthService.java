@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.onpoom.remoteupdate.common.error.ApiException;
 import com.onpoom.remoteupdate.common.error.ErrorCode;
 import com.onpoom.remoteupdate.config.AppProperties;
+import com.onpoom.remoteupdate.ipfilter.IpAccessPolicy;
 import com.onpoom.remoteupdate.user.AppUser;
 import com.onpoom.remoteupdate.user.AppUserRepository;
 import com.onpoom.remoteupdate.user.UserAdminService;
@@ -22,15 +23,17 @@ public class AuthService {
     private final AppUserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AppProperties appProperties;
+    private final IpAccessPolicy ipAccessPolicy;
 
     /** 존재하지 않는 이메일일 때도 BCrypt 비교를 수행해 응답 시간으로 계정 존재 여부가 드러나지 않게 함 */
     private final String dummyHash;
 
     public AuthService(AppUserRepository userRepository, PasswordEncoder passwordEncoder,
-            AppProperties appProperties) {
+            AppProperties appProperties, IpAccessPolicy ipAccessPolicy) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.appProperties = appProperties;
+        this.ipAccessPolicy = ipAccessPolicy;
         this.dummyHash = passwordEncoder.encode("dummy-password-for-timing");
     }
 
@@ -67,8 +70,8 @@ public class AuthService {
     }
 
     @Transactional(readOnly = true)
-    public MeResponse me(Long userId) {
-        return MeResponse.from(findActiveUser(userId));
+    public MeResponse me(Long userId, String clientIp) {
+        return MeResponse.from(findActiveUser(userId), clientIp, ipAccessPolicy.isManagementAllowed(clientIp));
     }
 
     /** 본인 비밀번호 변경. 변경 후 세션의 사용자 정보를 갱신할 수 있도록 새 Principal 반환 */

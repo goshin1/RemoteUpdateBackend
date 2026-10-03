@@ -41,8 +41,13 @@ public record AppProperties(
     public record Login(int maxFailures, Duration lockDuration) {
     }
 
-    /** 개발자/관리자 기능 IP 제한 (Phase 7) */
-    public record IpFilter(boolean enabled, List<String> trustedProxies) {
+    /**
+     * 관리 기능 IP 제한 (Phase 7).
+     * @param enabled               true 면 데이터 변경 요청과 /api/v1/admin/** 를 허용 IP(allowed_ip 테이블)에서만 받음
+     * @param alwaysAllowLocalhost  서버 PC 자신(127.0.0.1, ::1)은 항상 허용 — 허용 IP 를 잘못 지워도 서버 PC 에서 복구할 수 있게
+     * @param trustedProxies        X-Forwarded-For 를 믿어도 되는 프록시 주소 (ClientIpResolver)
+     */
+    public record IpFilter(boolean enabled, boolean alwaysAllowLocalhost, List<String> trustedProxies) {
     }
 
     public record Seed(Admin admin) {

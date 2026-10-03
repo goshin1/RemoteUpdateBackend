@@ -52,7 +52,11 @@ public enum ErrorCode {
     FILE_TOO_LARGE(HttpStatus.PAYLOAD_TOO_LARGE, "파일 크기가 허용 범위를 초과했습니다."),
     FILE_STORAGE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "파일 저장 중 오류가 발생했습니다."),
 
-    // IP (Phase 7)
+    // IP 제한 (Phase 7)
+    INVALID_IP(HttpStatus.BAD_REQUEST, "IP 주소 형식이 올바르지 않습니다. 예: 192.168.0.10 또는 192.168.0.0/24"),
+    DUPLICATE_IP(HttpStatus.CONFLICT, "이미 등록된 IP 입니다."),
+    ALLOWED_IP_NOT_FOUND(HttpStatus.NOT_FOUND, "허용 IP 를 찾을 수 없습니다."),
+    CANNOT_LOCK_OUT_SELF(HttpStatus.CONFLICT, "이 항목을 끄면 지금 접속한 IP 에서 관리 기능을 쓸 수 없게 됩니다. 다른 허용 IP 를 먼저 등록하세요."),
     IP_NOT_ALLOWED(HttpStatus.FORBIDDEN, "허용되지 않은 IP입니다.");
 
     private final HttpStatus status;

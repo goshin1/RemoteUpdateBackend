@@ -23,6 +23,9 @@ import org.springframework.security.web.csrf.CsrfException;
 
 import com.onpoom.remoteupdate.auth.SessionAuthenticator;
 import com.onpoom.remoteupdate.common.error.ErrorCode;
+import com.onpoom.remoteupdate.common.web.ClientIpResolver;
+import com.onpoom.remoteupdate.ipfilter.IpAccessPolicy;
+import com.onpoom.remoteupdate.ipfilter.IpRestrictionFilter;
 import com.onpoom.remoteupdate.user.AppUserRepository;
 
 import jakarta.servlet.DispatcherType;
@@ -40,7 +43,7 @@ import jakarta.servlet.DispatcherType;
  * 필터 순서 (요약)
  * <pre>
  * 세션에서 로그인 정보 복원 → CSRF 검사 → 로그아웃 → [SessionUserRefreshFilter] → 권한 검사(AuthorizationFilter)
- *   → [PasswordChangeRequiredFilter] → Controller
+ *   → [IpRestrictionFilter] → [PasswordChangeRequiredFilter] → Controller
  * </pre>
  */
 @Configuration
@@ -51,7 +54,8 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, SecurityErrorWriter errorWriter,
             SecurityContextRepository securityContextRepository, AppUserRepository userRepository,
-            SessionAuthenticator sessionAuthenticator) throws Exception {
+            SessionAuthenticator sessionAuthenticator, IpAccessPolicy ipAccessPolicy,
+            ClientIpResolver clientIpResolver) throws Exception {
         http
                 // CSRF: 상태 변경 요청(POST/PUT/PATCH/DELETE)은 XSRF-TOKEN 쿠키 값을 X-XSRF-TOKEN 헤더로 다시 보내야 통과.
                 // spa() = 쿠키 저장소(JS 에서 읽을 수 있게 HttpOnly 해제) + SPA 용 토큰 처리기. GET 은 검사하지 않음
@@ -103,8 +107,11 @@ public class SecurityConfig {
                 // 1) 권한 검사 "전": 세션의 사용자 정보를 DB 와 맞춤 (비활성화·역할 변경 즉시 반영)
                 .addFilterBefore(new SessionUserRefreshFilter(userRepository, sessionAuthenticator, errorWriter),
                         AuthorizationFilter.class)
-                // 2) 권한 검사 "후": 임시 비밀번호 상태면 인증 API 외 차단
-                .addFilterAfter(new PasswordChangeRequiredFilter(errorWriter), AuthorizationFilter.class);
+                // 2) 권한 검사 "후": 관리 기능 요청은 허용 IP 에서만 (IP_FILTER_ENABLED=true 일 때)
+                .addFilterAfter(new IpRestrictionFilter(ipAccessPolicy, clientIpResolver, errorWriter),
+                        AuthorizationFilter.class)
+                // 3) 그다음: 임시 비밀번호 상태면 인증 API 외 차단
+                .addFilterAfter(new PasswordChangeRequiredFilter(errorWriter), IpRestrictionFilter.class);
         return http.build();
     }
 
