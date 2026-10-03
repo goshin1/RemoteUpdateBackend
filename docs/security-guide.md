@@ -214,7 +214,7 @@ public MeResponse me(@AuthenticationPrincipal UserPrincipal principal) {
 
 ## 10. 파일 업로드·다운로드와 IP 보안 장치
 
-Phase 2 항목은 구현 완료 (`storage/LocalFileStorage.java`, `storage/UploadValidator.java`, `update/UpdateService.java`).
+Phase 2·3 항목은 구현 완료 (`storage/LocalFileStorage.java`, `storage/UploadValidator.java`, `update/UpdateService.java`, `update/DownloadService.java`, `common/web/ClientIpResolver.java`).
 
 | Phase | 장치 | 이유 |
 |---|---|---|
@@ -222,7 +222,9 @@ Phase 2 항목은 구현 완료 (`storage/LocalFileStorage.java`, `storage/Uploa
 | 2 | 저장 파일명을 서버가 UUID로 생성 | 파일명에 `../../` 를 넣어 서버의 다른 경로에 쓰는 **경로 조작** 공격 |
 | 2 | SHA-256 체크섬, 파일 교체 불가 | 파일 손상·변조 확인 |
 | 3 | 다운로드 시 권한·비활성 여부 확인 후 서버가 스트리밍 | 실제 저장 경로를 노출하지 않음 |
-| 7 | 허용 IP 필터, `X-Forwarded-For`는 신뢰하는 프록시에서 온 경우에만 사용 | 헤더를 위조해 IP 제한을 우회하는 공격 |
+| 3 | 다운로드 이력의 IP는 `ClientIpResolver`로 결정. `X-Forwarded-For`는 신뢰하는 프록시(`app.security.ip-filter.trusted-proxies`)에서 온 경우에만 사용 | 헤더를 위조해 다른 IP로 기록되게 하는 공격 |
+| 3 | 가이드 본문(마크다운)은 원문 그대로 내려가므로, 프런트에서 HTML로 바꿀 때 원시 HTML을 막아야 함 | 가이드에 스크립트를 심는 **XSS** 공격 |
+| 7 | 허용 IP 필터 (같은 `ClientIpResolver` 사용) | 허용되지 않은 위치에서 관리 기능 사용 |
 
 ---
 

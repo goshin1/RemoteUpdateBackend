@@ -35,6 +35,9 @@ public enum ErrorCode {
     UPDATE_NOT_FOUND(HttpStatus.NOT_FOUND, "업데이트를 찾을 수 없습니다."),
     DUPLICATE_VERSION(HttpStatus.CONFLICT, "이 프로젝트에 같은 버전이 이미 등록되어 있습니다."),
     UPDATE_DISABLED(HttpStatus.FORBIDDEN, "다운로드가 중단된 업데이트입니다."),
+    GUIDE_NOT_FOUND(HttpStatus.NOT_FOUND, "가이드를 찾을 수 없습니다."),
+    ATTACHMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "첨부 파일이 없습니다."),
+    INVALID_DATE_RANGE(HttpStatus.BAD_REQUEST, "조회 시작일이 종료일보다 늦습니다."),
 
     // 파일
     FILE_REQUIRED(HttpStatus.BAD_REQUEST, "파일을 선택하세요."),

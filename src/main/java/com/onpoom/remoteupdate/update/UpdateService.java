@@ -2,6 +2,7 @@ package com.onpoom.remoteupdate.update;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
@@ -28,6 +29,7 @@ import com.onpoom.remoteupdate.user.AppUserRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 @Slf4j
@@ -131,6 +133,16 @@ public class UpdateService {
         return UpdateResponse.from(info);
     }
 
+    /** 변경 이력 (오래된 순) */
+    public List<UpdateHistoryResponse> history(Long updateId) {
+        getUpdate(updateId);
+        return historyRepository.findByUpdateIdOrderByIdAsc(updateId).stream()
+                .map(h -> new UpdateHistoryResponse(h.getId(), h.getAction(), h.getChangedBy().getId(),
+                        h.getChangedBy().getName(), parse(h.getBeforeJson()), parse(h.getAfterJson()),
+                        h.getChangedAt()))
+                .toList();
+    }
+
     /** 직원에게는 비활성 업데이트를 "없는 것"으로 보여준다 */
     UpdateInfo getVisibleUpdate(Long updateId, UserPrincipal viewer) {
         UpdateInfo info = getUpdate(updateId);
@@ -150,6 +162,10 @@ public class UpdateService {
 
     private String toJson(UpdateInfo info) {
         return jsonMapper.writeValueAsString(UpdateSnapshot.of(info));
+    }
+
+    private JsonNode parse(String json) {
+        return json == null ? null : jsonMapper.readTree(json);
     }
 
     private void deleteFileIfRolledBack(String key) {

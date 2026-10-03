@@ -1,6 +1,7 @@
 package com.onpoom.remoteupdate.update;
 
 import java.net.URI;
+import java.util.List;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -55,6 +56,13 @@ public class UpdateController {
     @GetMapping("/updates/{id}")
     public UpdateResponse get(@PathVariable Long id, @AuthenticationPrincipal UserPrincipal principal) {
         return updateService.findOne(id, principal);
+    }
+
+    /** 변경 이력 (DEVELOPER 이상) */
+    @GetMapping("/updates/{id}/history")
+    @PreAuthorize("hasRole('DEVELOPER')")
+    public List<UpdateHistoryResponse> history(@PathVariable Long id) {
+        return updateService.history(id);
     }
 
     @PutMapping("/updates/{id}")
