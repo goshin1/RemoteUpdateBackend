@@ -228,7 +228,19 @@ Phase 2·3 항목은 구현 완료 (`storage/LocalFileStorage.java`, `storage/Up
 
 ---
 
-## 11. 직접 해보기 (서버 실행 후 PowerShell)
+## 11. XSS — 가이드 본문에 스크립트를 심는 공격
+
+**어떤 공격인가**: 개발자 계정이 탈취되거나 실수로, 가이드 본문에 `<script>...</script>`가 들어가면 그 가이드를 연 **모든 직원의 브라우저에서** 스크립트가 실행됩니다. 직원 권한으로 API를 호출하거나 화면을 위조할 수 있습니다.
+
+**막는 방법 (Frontend `src/utils/markdown.ts`)**
+- 마크다운 변환기(markdown-it)를 `html: false`로 설정 → 본문의 HTML 태그는 실행되지 않고 **글자로** 보임
+- `javascript:` 같은 위험한 링크는 링크로 만들지 않음 (markdown-it 기본 검사)
+- 외부 링크는 `rel="noopener noreferrer"` → 열린 페이지가 우리 창을 조작하지 못함
+- Vue의 `{{ }}`는 자동으로 이스케이프되므로 안전. **`v-html`은 위험**하니 `renderMarkdown()` 결과에만 사용
+
+Phase 4 E2E 테스트에서 `<script>`, `<img onerror>`, `javascript:` 링크를 넣은 가이드를 열어 아무것도 실행되지 않는 것을 확인했습니다.
+
+## 12. 직접 해보기 (서버 실행 후 PowerShell)
 
 `.\gradlew.bat bootRun` 으로 서버를 띄운 뒤 다른 PowerShell 창에서 실행합니다.
 
@@ -254,7 +266,7 @@ Invoke-RestMethod "$base/auth/logout" -Method Post -WebSession $s
 
 ---
 
-## 12. 파일 지도
+## 13. 파일 지도
 
 | 파일 | 역할 |
 |---|---|
