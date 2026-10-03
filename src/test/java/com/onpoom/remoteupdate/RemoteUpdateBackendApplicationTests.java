@@ -1,4 +1,4 @@
-package com.example.RemoteUpdateBackend;
+package com.onpoom.remoteupdate;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

@@ -38,3 +38,6 @@ out/
 
 gradlew
 gradlew.bat
+### RemoteUpdate ###
+# 업로드 파일 저장소 (로컬 개발용)
+storage/

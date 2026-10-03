@@ -1,0 +1,13 @@
+# 테스트는 MariaDB 없이 H2(MariaDB 호환 모드)로 실행
+spring:
+  datasource:
+    url: jdbc:h2:mem:remote_update;MODE=MariaDB;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+
+app:
+  storage:
+    root: ./build/test-storage

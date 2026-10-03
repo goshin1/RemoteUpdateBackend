@@ -1,0 +1,66 @@
+spring:
+  application:
+    name: RemoteUpdateBackend
+
+  datasource:
+    url: ${DB_URL:jdbc:mariadb://localhost:3306/remote_update}
+    username: ${DB_USERNAME:remote_update}
+    password: ${DB_PASSWORD:}
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      # 3일 개발 기간 동안은 update로 스키마를 맞추고, 운영 전 validate + 스키마 스크립트로 전환
+      ddl-auto: ${JPA_DDL_AUTO:update}
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: Asia/Seoul
+
+  servlet:
+    multipart:
+      max-file-size: 500MB
+      max-request-size: 510MB
+      # 일정 크기 이상은 메모리 대신 임시 파일로 받음
+      file-size-threshold: 2MB
+
+server:
+  port: 8080
+  servlet:
+    session:
+      timeout: 30m
+      cookie:
+        http-only: true
+        same-site: lax
+  tomcat:
+    # 크기 초과 업로드 시 연결을 끊지 않고 오류 응답을 돌려주기 위함
+    max-swallow-size: -1
+
+app:
+  storage:
+    # 업로드 파일 저장 위치 (추후 오브젝트 스토리지로 교체 가능하도록 추상화 예정)
+    root: ${STORAGE_ROOT:./storage}
+  upload:
+    # [확정 필요] Open Question #1 — 현재는 기획서 가정값
+    allowed-extensions: zip, exe, msi, pdf, md
+  security:
+    login:
+      # [확정 필요] Open Question #3 — 현재는 기획서 예시값
+      max-failures: 5
+      lock-duration: 15m
+    ip-filter:
+      # Phase 7에서 구현. 그 전까지는 꺼둠
+      enabled: false
+      # 리버스 프록시를 쓰는 경우에만 프록시 IP를 넣음 (X-Forwarded-For 신뢰 대상)
+      trusted-proxies: []
+  seed:
+    admin:
+      # 최초 기동 시 관리자 계정이 없으면 생성. 첫 로그인 시 비밀번호 변경 강제
+      email: ${ADMIN_EMAIL:admin@onpoom.co.kr}
+      name: ${ADMIN_NAME:시스템 관리자}
+      password: ${ADMIN_PASSWORD:ChangeMe!2026}
+
+logging:
+  level:
+    com.onpoom.remoteupdate: DEBUG
