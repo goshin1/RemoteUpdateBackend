@@ -93,8 +93,8 @@ public class UpdateService {
 
         UpdateInfo info;
         try {
-            // save 는 INSERT 를 트랜잭션 끝까지 미룰 수 있다. saveAndFlush 는 즉시 DB 로 보내서
-            // 유니크 제약 위반(같은 버전 동시 등록)을 이 try 안에서 잡을 수 있게 한다
+            // ID 전략이 IDENTITY 면 save 도 INSERT 를 바로 실행하지만, 다른 전략에서는 flush(커밋 직전)까지 미뤄질 수 있다.
+            // saveAndFlush 는 전략과 상관없이 즉시 DB 로 보내서, 유니크 제약 위반(같은 버전 동시 등록)을 이 try 안에서 확실히 잡는다
             info = updateRepository.saveAndFlush(UpdateInfo.create(project, developer, version,
                     request.title().trim(), request.content(), stored.key(), stored.originalName(),
                     stored.size(), stored.sha256()));
