@@ -256,7 +256,7 @@ Phase 2·3 항목은 구현 완료 (`storage/LocalFileStorage.java`, `storage/Up
 |---|---|
 | 접속 IP 는 `ClientIpResolver` 하나로 결정, `X-Forwarded-For` 는 신뢰 프록시에서만 | 헤더 위조로 허용 IP 인 척하는 공격 차단 |
 | 허용 목록은 단일 IP 와 CIDR(범위) 모두 | 사무실 IP 가 범위로 바뀌는 경우 |
-| 입력값을 IP 모양인지 먼저 검사 | `InetAddress` 가 호스트 이름으로 보고 DNS 를 조회하는 것 방지 (backend-concepts.md 26번) |
+| 입력값을 IP 모양인지 먼저 검사 | `InetAddress` 가 호스트 이름으로 보고 DNS 를 조회하는 것 방지 ([backend-concepts 30장](concepts/05-security.md#305-관리-기능-ip-제한과-cidr)) |
 | 서버 PC(127.0.0.1)는 항상 허용 | 설정 실수로 모두 잠겼을 때 복구 경로 |
 | 지금 IP 를 막게 되는 변경 거부 | 원격 관리자가 스스로를 잠그는 사고 방지 |
 | 로그인·조회·다운로드는 제한 안 함 | 현장 직원은 IP 가 수시로 바뀜 (기획서 결정 #4) |

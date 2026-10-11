@@ -141,6 +141,6 @@ com.onpoom.remoteupdate
 |---|---|
 | [docs/operations.md](docs/operations.md) | 운영 배포·환경 변수·HTTPS·백업·관리자 복구·IP 제한 켜기와 긴급 절차 |
 | [docs/security-guide.md](docs/security-guide.md) | 보안 구조 설명 (필터 체인, 세션, CSRF, BCrypt, XSS, IP 제한 등) |
-| [docs/backend-concepts.md](docs/backend-concepts.md) | 이 프로젝트에서 쓴 Spring Boot / JPA 개념 노트 (공부용) |
+| [docs/backend-concepts.md](docs/backend-concepts.md) | **Backend 교과서** — HTTP 기초부터 스프링·JPA·보안·파일·테스트·운영까지 이 프로젝트 코드로 설명 (공부용, `docs/concepts/` 9개 부) |
 | [docs/schema-mariadb.sql](docs/schema-mariadb.sql) | MariaDB 스키마 (참고용) |
 | [Frontend docs/user-manual.md](https://github.com/goshin1/RemoteUpdateFrontend/blob/develop/docs/user-manual.md) | 화면 사용 설명서 (직원·개발자·관리자) |
